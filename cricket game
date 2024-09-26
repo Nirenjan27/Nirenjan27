@@ -1,0 +1,120 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Set up some constants
+WIDTH, HEIGHT = 800, 600
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+FONT = pygame.font.SysFont("Arial", 24)
+
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.age = 20
+        self.skill_level = 50
+        self.experience = 0
+        self.stats = {'batting_average': 0, 'bowling_average': 0}
+
+    def train(self):
+        self.skill_level += 10
+        self.experience += 1
+
+    def play_match(self):
+        batting_score = random.randint(0, 100)
+        bowling_score = random.randint(0, 100)
+        self.stats['batting_average'] = (self.stats['batting_average'] + batting_score) / 2
+        self.stats['bowling_average'] = (self.stats['bowling_average'] + bowling_score) / 2
+        return batting_score, bowling_score
+
+class Team:
+    def __init__(self, name):
+        self.name = name
+        self.players = []
+
+    def add_player(self, player):
+        self.players.append(player)
+
+    def play_match(self, opponent):
+        batting_scores = []
+        bowling_scores = []
+        for player in self.players:
+            batting_score, bowling_score = player.play_match()
+            batting_scores.append(batting_score)
+            bowling_scores.append(bowling_score)
+        opponent_batting_scores = []
+        opponent_bowling_scores = []
+        for opponent_player in opponent.players:
+            opponent_batting_score, opponent_bowling_score = opponent_player.play_match()
+            opponent_batting_scores.append(opponent_batting_score)
+            opponent_bowling_scores.append(opponent_bowling_score)
+        return sum(batting_scores) > sum(opponent_batting_scores)
+
+class CareerMode:
+    def __init__(self, player):
+        self.player = player
+        self.teams = []
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.clock = pygame.time.Clock()
+
+    def create_team(self, team_name):
+        team = Team(team_name)
+        team.add_player(self.player)
+        self.teams.append(team)
+
+    def play_season(self):
+        for team in self.teams:
+            for _ in range(10):  # play 10 matches
+                opponent = random.choice(self.teams)
+                if team != opponent:
+                    result = team.play_match(opponent)
+                    if result:
+                        self.display_text(f"{team.name} won against {opponent.name}!")
+                    else:
+                        self.display_text(f"{team.name} lost against {opponent.name}!")
+                    pygame.display.update()
+                    self.clock.tick(1)
+
+    def display_stats(self):
+        self.screen.fill(WHITE)
+        text = FONT.render(f"Player Name: {self.player.name}", True, BLACK)
+        self.screen.blit(text, (10, 10))
+        text = FONT.render(f"Age: {self.player.age}", True, BLACK)
+        self.screen.blit(text, (10, 40))
+        text = FONT.render(f"Skill Level: {self.player.skill_level}", True, BLACK)
+        self.screen.blit(text, (10, 70))
+        text = FONT.render(f"Experience: {self.player.experience}", True, BLACK)
+        self.screen.blit(text, (10, 100))
+        text = FONT.render(f"Batting Average: {self.player.stats['batting_average']:.2f}", True, BLACK)
+        self.screen.blit(text, (10, 130))
+        text = FONT.render(f"Bowling Average: {self.player.stats['bowling_average']:.2f}", True, BLACK)
+        self.screen.blit(text, (10, 160))
+        pygame.display.update()
+
+    def display_text(self, text):
+        self.screen.fill(WHITE)
+        text_surface = FONT.render(text, True, BLACK)
+        self.screen.blit(text_surface, (WIDTH // 2 - text_surface.get_width() // 2, HEIGHT // 2 - text_surface.get_height() // 2))
+        pygame.display.update()
+
+    def run(self):
+        self.create_team("Mumbai Indians")
+        self.play_season()
+        self.display_stats()
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+        pygame.quit()
+
+# Create a player
+player = Player("Rohit Sharma")
+
+# Create a career mode instance
+career_mode = CareerMode(player)
+
+# Run the game
+career_mode.run()
